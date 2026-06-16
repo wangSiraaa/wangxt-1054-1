@@ -36,6 +36,14 @@
             <el-icon><Tickets /></el-icon>
             <span>工单池</span>
           </el-menu-item>
+          <el-menu-item index="/dispatcher/events">
+            <el-icon><Collection /></el-icon>
+            <span>事件单管理</span>
+          </el-menu-item>
+          <el-menu-item index="/dispatcher/analytics">
+            <el-icon><TrendCharts /></el-icon>
+            <span>数据分析</span>
+          </el-menu-item>
         </template>
         <template v-if="currentRole === 'worker'">
           <el-menu-item index="/worker/dashboard">
@@ -49,6 +57,10 @@
           <el-menu-item index="/worker/my-orders">
             <el-icon><List /></el-icon>
             <span>我的工单</span>
+          </el-menu-item>
+          <el-menu-item index="/worker/building-events">
+            <el-icon><OfficeBuilding /></el-icon>
+            <span>楼栋事件</span>
           </el-menu-item>
         </template>
         <template v-if="currentRole === 'dormManager'">
@@ -142,6 +154,7 @@ import { UserFilled } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { useWorkOrderStore } from '@/stores/workOrder'
 import { useSparePartsStore } from '@/stores/spareParts'
+import { useEventOrderStore } from '@/stores/eventOrder'
 import NotificationList from '@/components/NotificationList.vue'
 
 const route = useRoute()
@@ -149,11 +162,13 @@ const router = useRouter()
 const userStore = useUserStore()
 const workOrderStore = useWorkOrderStore()
 const sparePartsStore = useSparePartsStore()
+const eventOrderStore = useEventOrderStore()
 
 onMounted(() => {
   userStore.initFromStorage()
   workOrderStore.initFromStorage()
   sparePartsStore.initFromStorage()
+  eventOrderStore.initFromStorage()
 })
 
 const activeMenu = computed(() => route.path)
@@ -196,6 +211,7 @@ function handleCommand(command) {
     }).then(() => {
       workOrderStore.saveToStorage()
       sparePartsStore.saveToStorage()
+      eventOrderStore.saveToStorage()
       userStore.logout()
       ElMessage.success('已退出登录')
       router.push('/login')

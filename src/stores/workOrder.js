@@ -47,7 +47,10 @@ export const useWorkOrderStore = defineStore('workOrder', () => {
         { sparePartId: 1, sparePartName: '水管密封圈', quantity: 2 }
       ],
       evaluation: null,
-      transferHistory: []
+      transferHistory: [],
+      eventId: null,
+      isRework: false,
+      originalOrderId: null
     },
     {
       id: 'WO202401003',
@@ -75,7 +78,10 @@ export const useWorkOrderStore = defineStore('workOrder', () => {
         { sparePartId: 2, sparePartName: '空气开关', quantity: 1 }
       ],
       evaluation: null,
-      transferHistory: []
+      transferHistory: [],
+      eventId: 'EVT202401001',
+      isRework: false,
+      originalOrderId: null
     },
     {
       id: 'WO202401004',
@@ -105,7 +111,10 @@ export const useWorkOrderStore = defineStore('workOrder', () => {
         comment: '师傅很专业，很快就修好了',
         time: '2024-01-14 18:00:00'
       },
-      transferHistory: []
+      transferHistory: [],
+      eventId: null,
+      isRework: false,
+      originalOrderId: null
     },
     {
       id: 'WO202401005',
@@ -133,7 +142,10 @@ export const useWorkOrderStore = defineStore('workOrder', () => {
         { sparePartId: 3, sparePartName: '抽屉滑轨', quantity: 1 }
       ],
       evaluation: null,
-      transferHistory: []
+      transferHistory: [],
+      eventId: null,
+      isRework: false,
+      originalOrderId: null
     },
     {
       id: 'WO202401006',
@@ -161,7 +173,10 @@ export const useWorkOrderStore = defineStore('workOrder', () => {
         { sparePartId: 4, sparePartName: '管道疏通剂', quantity: 1 }
       ],
       evaluation: null,
-      transferHistory: []
+      transferHistory: [],
+      eventId: 'EVT202401002',
+      isRework: false,
+      originalOrderId: null
     },
     {
       id: 'WO202401007',
@@ -189,7 +204,10 @@ export const useWorkOrderStore = defineStore('workOrder', () => {
         { sparePartId: 5, sparePartName: 'LED灯泡', quantity: 1 }
       ],
       evaluation: null,
-      transferHistory: []
+      transferHistory: [],
+      eventId: null,
+      isRework: false,
+      originalOrderId: null
     },
     {
       id: 'WO202401008',
@@ -217,7 +235,10 @@ export const useWorkOrderStore = defineStore('workOrder', () => {
         { sparePartId: 6, sparePartName: '空调遥控器电池', quantity: 2 }
       ],
       evaluation: null,
-      transferHistory: []
+      transferHistory: [],
+      eventId: null,
+      isRework: false,
+      originalOrderId: null
     },
     {
       id: 'WO202401009',
@@ -243,7 +264,99 @@ export const useWorkOrderStore = defineStore('workOrder', () => {
       delayEndTime: null,
       requiredSpareParts: [],
       evaluation: null,
-      transferHistory: []
+      transferHistory: [],
+      eventId: null,
+      isRework: true,
+      originalOrderId: 'WO202401001'
+    },
+    {
+      id: 'WO202401010',
+      studentId: 1,
+      studentName: '张三',
+      building: '1号楼',
+      room: '303',
+      problemTypeId: 3,
+      problemTypeName: '断电',
+      description: '宿舍断电，和302一起黑的',
+      photos: [],
+      urgency: 'urgent',
+      status: 'pending',
+      createTime: '2024-01-15 22:32:00',
+      mergedCount: 0,
+      mergedFrom: [],
+      workerId: null,
+      workerName: null,
+      assignedTime: null,
+      startProcessTime: null,
+      completeTime: null,
+      delayReason: null,
+      delayEndTime: null,
+      requiredSpareParts: [],
+      evaluation: null,
+      transferHistory: [],
+      eventId: 'EVT202401001',
+      isRework: false,
+      originalOrderId: null
+    },
+    {
+      id: 'WO202401011',
+      studentId: 2,
+      studentName: '李四',
+      building: '1号楼',
+      room: '304',
+      problemTypeId: 3,
+      problemTypeName: '断电',
+      description: '整层断电',
+      photos: [],
+      urgency: 'urgent',
+      status: 'pending',
+      createTime: '2024-01-15 22:33:00',
+      mergedCount: 0,
+      mergedFrom: [],
+      workerId: null,
+      workerName: null,
+      assignedTime: null,
+      startProcessTime: null,
+      completeTime: null,
+      delayReason: null,
+      delayEndTime: null,
+      requiredSpareParts: [],
+      evaluation: null,
+      transferHistory: [],
+      eventId: 'EVT202401001',
+      isRework: false,
+      originalOrderId: null
+    },
+    {
+      id: 'WO202401012',
+      studentId: 1,
+      studentName: '张三',
+      building: '2号楼',
+      room: '405',
+      problemTypeId: 4,
+      problemTypeName: '管道疏通',
+      description: '下水道又堵了，上次还没修好',
+      photos: [],
+      urgency: 'normal',
+      status: 'queued',
+      createTime: '2024-01-15 16:00:00',
+      mergedCount: 0,
+      mergedFrom: [],
+      workerId: null,
+      workerName: null,
+      assignedTime: null,
+      startProcessTime: null,
+      completeTime: null,
+      delayReason: null,
+      delayEndTime: null,
+      requiredSpareParts: [
+        { sparePartId: 4, sparePartName: '管道疏通剂', quantity: 1 }
+      ],
+      evaluation: null,
+      transferHistory: [],
+      eventId: 'EVT202401002',
+      isRework: false,
+      originalOrderId: 'WO202401006'
     }
   ])
 
@@ -260,6 +373,7 @@ export const useWorkOrderStore = defineStore('workOrder', () => {
     { value: 'assigned', label: '已派单', className: 'status-processing' },
     { value: 'processing', label: '处理中', className: 'status-processing' },
     { value: 'delayed', label: '已延期', className: 'status-delayed' },
+    { value: 'queued', label: '排队中', className: 'status-queued' },
     { value: 'completed', label: '已完成', className: 'status-completed' },
     { value: 'cancelled', label: '已取消', className: 'status-cancelled' }
   ]
@@ -268,6 +382,49 @@ export const useWorkOrderStore = defineStore('workOrder', () => {
   const processingOrders = computed(() => workOrders.value.filter(o => ['assigned', 'processing'].includes(o.status)))
   const completedOrders = computed(() => workOrders.value.filter(o => o.status === 'completed'))
   const delayedOrders = computed(() => workOrders.value.filter(o => o.status === 'delayed'))
+  const queuedOrders = computed(() => workOrders.value.filter(o => o.status === 'queued'))
+
+  function getOvertimeOrders(hours = 24) {
+    const now = new Date()
+    return workOrders.value.filter(o => {
+      if (['completed', 'cancelled'].includes(o.status)) return false
+      const created = new Date(o.createTime)
+      const diff = (now - created) / (1000 * 60 * 60)
+      return diff > hours
+    })
+  }
+
+  function getReworkStats() {
+    const roomMap = {}
+    workOrders.value.forEach(o => {
+      const key = `${o.building}-${o.room}`
+      if (!roomMap[key]) {
+        roomMap[key] = { building: o.building, room: o.room, total: 0, rework: 0 }
+      }
+      roomMap[key].total++
+      if (o.isRework) {
+        roomMap[key].rework++
+      }
+    })
+    return Object.values(roomMap)
+      .filter(r => r.rework > 0)
+      .map(r => ({ ...r, reworkRate: Math.round((r.rework / r.total) * 100) }))
+      .sort((a, b) => b.reworkRate - a.reworkRate)
+  }
+
+  function getDelayedBySpareParts() {
+    return delayedOrders.value
+      .filter(o => o.delayReason && (o.delayReason.includes('库存') || o.delayReason.includes('备件') || o.delayReason.includes('不足')))
+      .map(o => ({
+        orderId: o.id,
+        building: o.building,
+        room: o.room,
+        problemTypeName: o.problemTypeName,
+        delayReason: o.delayReason,
+        delayEndTime: o.delayEndTime,
+        requiredSpareParts: o.requiredSpareParts
+      }))
+  }
 
   function getStatusInfo(status) {
     return statusList.find(s => s.value === status) || { label: '未知', className: '' }
@@ -307,9 +464,9 @@ export const useWorkOrderStore = defineStore('workOrder', () => {
 
   function createWorkOrder(orderData) {
     const newId = 'WO' + Date.now().toString().slice(-9)
-    const existingOrder = workOrders.value.find(o => 
-      o.building === orderData.building && 
-      o.room === orderData.room && 
+    const existingOrder = workOrders.value.find(o =>
+      o.building === orderData.building &&
+      o.room === orderData.room &&
       o.problemTypeId === orderData.problemTypeId &&
       ['pending', 'assigned', 'processing'].includes(o.status)
     )
@@ -332,11 +489,73 @@ export const useWorkOrderStore = defineStore('workOrder', () => {
       return existingOrder
     }
 
+    const delayedOrder = workOrders.value.find(o =>
+      o.building === orderData.building &&
+      o.room === orderData.room &&
+      o.problemTypeId === orderData.problemTypeId &&
+      o.status === 'delayed'
+    )
+
+    if (delayedOrder) {
+      const problemType = getProblemType(orderData.problemTypeId)
+      const newOrder = {
+        id: newId,
+        ...orderData,
+        problemTypeName: problemType ? problemType.name : '',
+        status: 'queued',
+        createTime: new Date().toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-'),
+        mergedCount: 0,
+        mergedFrom: [],
+        workerId: null,
+        workerName: null,
+        assignedTime: null,
+        startProcessTime: null,
+        completeTime: null,
+        delayReason: null,
+        delayEndTime: null,
+        requiredSpareParts: orderData.requiredSpareParts || [],
+        evaluation: null,
+        transferHistory: [],
+        eventId: delayedOrder.eventId,
+        isRework: false,
+        originalOrderId: delayedOrder.id
+      }
+
+      workOrders.value.unshift(newOrder)
+
+      if (delayedOrder.eventId) {
+        addNotification({
+          userId: orderData.studentId,
+          title: '报修排队通知',
+          content: `同房间有因"${delayedOrder.delayReason}"挂起的工单，您的报修已排队到事件 ${delayedOrder.eventId} 下，待备件到位后统一处理`,
+          type: 'delay'
+        })
+      } else {
+        addNotification({
+          userId: orderData.studentId,
+          title: '报修排队通知',
+          content: `同房间有因"${delayedOrder.delayReason}"挂起的工单，您的报修已排队，待备件到位后统一处理`,
+          type: 'delay'
+        })
+      }
+
+      return newOrder
+    }
+
     const problemType = getProblemType(orderData.problemTypeId)
     let urgency = orderData.urgency
     if (problemType && problemType.isUrgent) {
       urgency = 'urgent'
     }
+
+    const completedSameRoom = workOrders.value.find(o =>
+      o.building === orderData.building &&
+      o.room === orderData.room &&
+      o.problemTypeId === orderData.problemTypeId &&
+      o.status === 'completed' &&
+      o.completeTime &&
+      (new Date() - new Date(o.completeTime)) < 7 * 24 * 60 * 60 * 1000
+    )
 
     const newOrder = {
       id: newId,
@@ -353,11 +572,25 @@ export const useWorkOrderStore = defineStore('workOrder', () => {
       completeTime: null,
       delayReason: null,
       delayEndTime: null,
+      requiredSpareParts: orderData.requiredSpareParts || [],
       evaluation: null,
-      transferHistory: []
+      transferHistory: [],
+      eventId: null,
+      isRework: !!completedSameRoom,
+      originalOrderId: completedSameRoom ? completedSameRoom.id : null
     }
 
     workOrders.value.unshift(newOrder)
+
+    if (completedSameRoom) {
+      addNotification({
+        userId: 3,
+        title: '返修预警',
+        content: `${orderData.building} ${orderData.room} 的 ${problemType?.name} 在7天内返修，请关注`,
+        type: 'merge'
+      })
+    }
+
     return newOrder
   }
 
@@ -585,6 +818,7 @@ export const useWorkOrderStore = defineStore('workOrder', () => {
     processingOrders,
     completedOrders,
     delayedOrders,
+    queuedOrders,
     getStatusInfo,
     getUrgencyInfo,
     getProblemType,
@@ -608,6 +842,9 @@ export const useWorkOrderStore = defineStore('workOrder', () => {
     getUnreadNotificationCount,
     getBuildingStats,
     getSortedPendingOrders,
+    getOvertimeOrders,
+    getReworkStats,
+    getDelayedBySpareParts,
     initFromStorage,
     saveToStorage
   }

@@ -62,6 +62,16 @@ const routes = [
         component: () => import('@/views/dispatcher/WorkOrderPool.vue')
       },
       {
+        path: 'events',
+        name: 'DispatcherEvents',
+        component: () => import('@/views/dispatcher/EventManagement.vue')
+      },
+      {
+        path: 'analytics',
+        name: 'DispatcherAnalytics',
+        component: () => import('@/views/dispatcher/Analytics.vue')
+      },
+      {
         path: 'assign/:id',
         name: 'DispatcherAssign',
         component: () => import('@/views/dispatcher/AssignWorkOrder.vue')
@@ -91,6 +101,11 @@ const routes = [
         path: 'available',
         name: 'WorkerAvailable',
         component: () => import('@/views/worker/AvailableOrders.vue')
+      },
+      {
+        path: 'building-events',
+        name: 'WorkerBuildingEvents',
+        component: () => import('@/views/worker/BuildingEvents.vue')
       },
       {
         path: 'complete/:id',

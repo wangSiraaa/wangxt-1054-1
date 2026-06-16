@@ -83,6 +83,10 @@ body {
   color: #f56c6c;
 }
 
+.status-queued {
+  color: #909399;
+}
+
 .flex-between {
   display: flex;
   justify-content: space-between;
