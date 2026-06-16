@@ -1,0 +1,112 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.page-container {
+  padding: 20px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.page-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.card-wrapper {
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+}
+
+.urgent-tag {
+  background-color: #f56c6c !important;
+  color: #fff !important;
+}
+
+.high-tag {
+  background-color: #e6a23c !important;
+  color: #fff !important;
+}
+
+.normal-tag {
+  background-color: #67c23a !important;
+  color: #fff !important;
+}
+
+.low-tag {
+  background-color: #909399 !important;
+  color: #fff !important;
+}
+
+.merged-badge {
+  background-color: #409eff;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  margin-left: 8px;
+}
+
+.status-pending {
+  color: #e6a23c;
+}
+
+.status-processing {
+  color: #409eff;
+}
+
+.status-completed {
+  color: #67c23a;
+}
+
+.status-cancelled {
+  color: #909399;
+}
+
+.status-delayed {
+  color: #f56c6c;
+}
+
+.flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.mb-10 {
+  margin-bottom: 10px;
+}
+
+.mb-20 {
+  margin-bottom: 20px;
+}
+
+.mt-10 {
+  margin-top: 10px;
+}
+
+.mt-20 {
+  margin-top: 20px;
+}
