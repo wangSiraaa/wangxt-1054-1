@@ -38,7 +38,14 @@
         <h4>所需备件</h4>
         <el-table :data="order.requiredSpareParts" size="small">
           <el-table-column prop="sparePartName" label="备件名称" />
-          <el-table-column prop="quantity" label="数量" />
+          <el-table-column prop="quantity" label="需求数量" />
+          <el-table-column label="当前库存">
+            <template #default="{ row }">
+              <span :class="checkStock(row.sparePartId, row.quantity) ? 'status-completed' : 'status-delayed'">
+                {{ getStock(row.sparePartId) }}
+              </span>
+            </template>
+          </el-table-column>
           <el-table-column label="库存状态">
             <template #default="{ row }">
               <el-tag v-if="checkStock(row.sparePartId, row.quantity)" type="success">库存充足</el-tag>
@@ -47,13 +54,56 @@
           </el-table-column>
         </el-table>
         <el-alert
-          v-if="!hasEnoughStock"
-          title="部分备件库存不足，派单后将自动通知备件管理员"
-          type="warning"
+          v-if="!hasEnoughStock && order.status !== 'delayed'"
+          title="备件库存不足，系统将自动延期工单，请先补货后再派单"
+          type="error"
           show-icon
           :closable="false"
           class="mt-10"
-        />
+        >
+          <template #default>
+            <p>缺失备件：{{ missingPartNames }}</p>
+            <div class="alert-actions mt-10">
+              <el-button type="danger" size="small" @click="goToSpareParts">
+                <el-icon><Warning /></el-icon>
+                去补货
+              </el-button>
+            </div>
+          </template>
+        </el-alert>
+        <el-alert
+          v-if="order.status === 'delayed'"
+          :title="hasEnoughStock ? '备件已补货完成，可以进行派单' : '工单已延期，备件库存仍然不足'"
+          :type="hasEnoughStock ? 'success' : 'warning'"
+          show-icon
+          :closable="false"
+          class="mt-10"
+        >
+          <template #default>
+            <p v-if="order.delayReason">延期原因：{{ order.delayReason }}</p>
+            <div class="alert-actions mt-10">
+              <el-button 
+                v-if="!hasEnoughStock" 
+                type="warning" 
+                size="small" 
+                @click="goToSpareParts"
+              >
+                <el-icon><Warning /></el-icon>
+                去补货
+              </el-button>
+              <el-button 
+                v-if="hasEnoughStock" 
+                type="success" 
+                size="small" 
+                @click="restoreOrder"
+                :loading="restoring"
+              >
+                <el-icon><CircleCheckFilled /></el-icon>
+                恢复待派单
+              </el-button>
+            </div>
+          </template>
+        </el-alert>
       </div>
     </el-card>
 
@@ -112,11 +162,11 @@
           <el-button
             type="primary"
             size="large"
-            :disabled="!selectedWorkerId"
+            :disabled="!selectedWorkerId || !canAssign"
             :loading="loading"
             @click="submitAssign"
           >
-            确认派单
+            {{ !hasEnoughStock ? '备件不足，无法派单' : '确认派单' }}
           </el-button>
         </div>
       </div>
@@ -157,8 +207,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { ArrowLeft, UserFilled, CircleCheckFilled } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { ArrowLeft, UserFilled, CircleCheckFilled, Warning } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { useWorkOrderStore } from '@/stores/workOrder'
 import { useSparePartsStore } from '@/stores/spareParts'
@@ -170,6 +220,7 @@ const workOrderStore = useWorkOrderStore()
 const sparePartsStore = useSparePartsStore()
 
 const loading = ref(false)
+const restoring = ref(false)
 const selectedWorkerId = ref(null)
 const showAllWorkers = ref(false)
 
@@ -203,8 +254,63 @@ const hasEnoughStock = computed(() => {
   )
 })
 
+const missingPartNames = computed(() => {
+  if (!order.value) return ''
+  return order.value.requiredSpareParts
+    .filter(part => !checkStock(part.sparePartId, part.quantity))
+    .map(part => part.sparePartName)
+    .join('、')
+})
+
+const canAssign = computed(() => {
+  if (!order.value) return false
+  if (order.value.status === 'delayed' && !hasEnoughStock.value) return false
+  return hasEnoughStock.value
+})
+
 function checkStock(partId, quantity) {
   return sparePartsStore.checkStock(partId, quantity)
+}
+
+function getStock(partId) {
+  const part = sparePartsStore.getPartById(partId)
+  return part?.stock || 0
+}
+
+function goToSpareParts() {
+  router.push('/spare-parts/inventory')
+}
+
+async function restoreOrder() {
+  if (!order.value) return
+  
+  try {
+    await ElMessageBox.confirm(
+      `确定要恢复工单 ${order.value.id} 为待派单状态吗？`,
+      '恢复工单',
+      {
+        confirmButtonText: '确定恢复',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    
+    restoring.value = true
+    const result = workOrderStore.restoreDelayedOrder(order.value.id)
+    
+    if (result.success) {
+      ElMessage.success(result.message)
+      workOrderStore.saveToStorage()
+    } else {
+      ElMessage.error(result.message)
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('操作已取消')
+    }
+  } finally {
+    restoring.value = false
+  }
 }
 
 function getWorkerCurrentOrderCount(workerId) {
@@ -212,8 +318,28 @@ function getWorkerCurrentOrderCount(workerId) {
     .filter(o => ['assigned', 'processing', 'delayed'].includes(o.status)).length
 }
 
-function submitAssign() {
+async function submitAssign() {
   if (!selectedWorkerId.value || !order.value) return
+  
+  if (!hasEnoughStock.value) {
+    try {
+      await ElMessageBox.confirm(
+        '备件库存不足，强制派单将自动延期工单。建议先补货后再派单。是否继续？',
+        '库存不足警告',
+        {
+          confirmButtonText: '强制派单（自动延期）',
+          cancelButtonText: '取消派单',
+          type: 'warning',
+          confirmButtonClass: 'el-button--danger'
+        }
+      )
+    } catch (error) {
+      if (error === 'cancel') {
+        return
+      }
+    }
+  }
+
   loading.value = true
 
   setTimeout(() => {
@@ -224,29 +350,33 @@ function submitAssign() {
       return
     }
 
-    workOrderStore.assignWorkOrder(order.value.id, worker.id, worker.name)
+    const result = workOrderStore.assignWorkOrderWithStockCheck(
+      order.value.id, 
+      worker.id, 
+      worker.name
+    )
 
-    if (!hasEnoughStock.value) {
-      workOrderStore.addNotification({
-        userId: 9,
-        title: '工单派单备件预警',
-        content: `工单 ${order.value.id} 已派单，但备件库存不足，请及时处理`,
-        type: 'spareParts'
+    if (result.success) {
+      order.value.requiredSpareParts.forEach(part => {
+        sparePartsStore.consumeStock(part.sparePartId, part.quantity)
       })
+      sparePartsStore.saveToStorage()
+      
+      ElMessage.success(`工单已派给 ${worker.name} 师傅`)
+    } else {
+      if (result.reason === 'sparePartsInsufficient') {
+        ElMessage.warning(result.message)
+      } else {
+        ElMessage.error(result.message)
+      }
     }
 
-    order.value.requiredSpareParts.forEach(part => {
-      sparePartsStore.consumeStock(part.sparePartId, part.quantity)
-    })
-
     workOrderStore.saveToStorage()
-    sparePartsStore.saveToStorage()
 
     loading.value = false
-    ElMessage.success(`工单已派给 ${worker.name} 师傅`)
     setTimeout(() => {
       router.push('/dispatcher/pool')
-    }, 1000)
+    }, 1500)
   }, 500)
 }
 

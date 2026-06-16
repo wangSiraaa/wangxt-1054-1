@@ -55,7 +55,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="280" fixed="right">
+        <el-table-column label="操作" width="380" fixed="right">
           <template #default="{ row }">
             <el-button
               type="primary"
@@ -72,6 +72,14 @@
               :disabled="!hasEnoughStock(row)"
             >
               恢复处理
+            </el-button>
+            <el-button
+              v-if="hasEnoughStock(row)"
+              type="warning"
+              size="small"
+              @click="goToAssign(row)"
+            >
+              去派单
             </el-button>
             <el-button type="primary" link size="small" @click="showDetail(row)">
               详情
@@ -167,10 +175,12 @@
 
 <script setup>
 import { ref, reactive, computed } from 'vue'
-import { ElMessage } from 'element-plus'
+import { useRouter } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { useWorkOrderStore } from '@/stores/workOrder'
 import { useSparePartsStore } from '@/stores/spareParts'
 
+const router = useRouter()
 const workOrderStore = useWorkOrderStore()
 const sparePartsStore = useSparePartsStore()
 
@@ -222,6 +232,10 @@ function showDetail(order) {
   detailVisible.value = true
 }
 
+function goToAssign(order) {
+  router.push(`/dispatcher/assign/${order.id}`)
+}
+
 function submitRestock() {
   if (!currentOrder.value) return
 
@@ -252,25 +266,47 @@ function submitRestock() {
   restockVisible.value = false
 }
 
-function resolveOrder(order) {
+async function resolveOrder(order) {
   if (!hasEnoughStock(order)) {
     ElMessage.warning('备件库存不足，请先补货')
     return
   }
 
-  order.status = 'assigned'
-  order.delayReason = null
-  order.delayEndTime = null
+  try {
+    await ElMessageBox.confirm(
+      `工单 ${order.id} 备件已补货完成，是否立即恢复为待派单状态并进行派单？`,
+      '恢复工单',
+      {
+        confirmButtonText: '恢复并去派单',
+        cancelButtonText: '仅恢复状态',
+        type: 'success',
+        distinguishCancelAndClose: true
+      }
+    )
 
-  workOrderStore.addNotification({
-    userId: order.workerId,
-    title: '工单恢复',
-    content: `工单 ${order.id} 已恢复正常状态，请继续处理`,
-    type: 'spareParts'
-  })
-
-  workOrderStore.saveToStorage()
-  ElMessage.success('工单已恢复正常状态')
+    const result = workOrderStore.restoreDelayedOrder(order.id)
+    
+    if (result.success) {
+      workOrderStore.saveToStorage()
+      ElMessage.success(result.message)
+      
+      setTimeout(() => {
+        router.push(`/dispatcher/assign/${order.id}`)
+      }, 1000)
+    } else {
+      ElMessage.error(result.message)
+    }
+  } catch (error) {
+    if (error === 'cancel') {
+      const result = workOrderStore.restoreDelayedOrder(order.id)
+      if (result.success) {
+        workOrderStore.saveToStorage()
+        ElMessage.success('工单已恢复为待派单状态')
+      } else {
+        ElMessage.error(result.message)
+      }
+    }
+  }
 }
 </script>
 

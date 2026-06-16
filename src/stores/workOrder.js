@@ -1,7 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { useSparePartsStore } from './spareParts'
 
 export const useWorkOrderStore = defineStore('workOrder', () => {
+  const sparePartsStore = useSparePartsStore()
   const problemTypes = [
     { id: 1, name: '水电维修', isUrgent: false },
     { id: 2, name: '漏水', isUrgent: true },
@@ -691,8 +693,104 @@ export const useWorkOrderStore = defineStore('workOrder', () => {
         content: `您的工单 ${orderId} 因"${reason}"已延期至 ${delayEndTime}`,
         type: 'delay'
       })
+      addNotification({
+        userId: 9,
+        title: '工单延期提醒',
+        content: `工单 ${orderId} 因"${reason}"已延期，请及时处理`,
+        type: 'delay'
+      })
     }
     return order
+  }
+
+  function checkOrderSparePartsStock(orderId) {
+    const order = workOrders.value.find(o => o.id === orderId)
+    if (!order) return { hasEnough: true, missingParts: [] }
+    
+    const missingParts = []
+    order.requiredSpareParts.forEach(part => {
+      const hasStock = sparePartsStore.checkStock(part.sparePartId, part.quantity)
+      if (!hasStock) {
+        const partInfo = sparePartsStore.getPartById(part.sparePartId)
+        missingParts.push({
+          ...part,
+          currentStock: partInfo?.stock || 0,
+          minStock: partInfo?.minStock || 0
+        })
+      }
+    })
+    
+    return {
+      hasEnough: missingParts.length === 0,
+      missingParts
+    }
+  }
+
+  function assignWorkOrderWithStockCheck(orderId, workerId, workerName) {
+    const stockCheck = checkOrderSparePartsStock(orderId)
+    
+    if (!stockCheck.hasEnough) {
+      const missingNames = stockCheck.missingParts.map(p => p.sparePartName).join('、')
+      const order = workOrders.value.find(o => o.id === orderId)
+      
+      if (order && order.status !== 'delayed') {
+        const delayEndTime = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)
+          .toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-')
+        delayOrder(orderId, `备件不足：${missingNames}`, delayEndTime)
+      }
+      
+      return {
+        success: false,
+        reason: 'sparePartsInsufficient',
+        message: `备件库存不足：${missingNames}，工单已自动延期，请先补货`,
+        missingParts: stockCheck.missingParts,
+        order
+      }
+    }
+    
+    const result = assignWorkOrder(orderId, workerId, workerName)
+    return {
+      success: true,
+      order: result
+    }
+  }
+
+  function restoreDelayedOrder(orderId) {
+    const stockCheck = checkOrderSparePartsStock(orderId)
+    if (!stockCheck.hasEnough) {
+      const missingNames = stockCheck.missingParts.map(p => p.sparePartName).join('、')
+      return {
+        success: false,
+        message: `备件库存仍然不足：${missingNames}，请先补货`,
+        missingParts: stockCheck.missingParts
+      }
+    }
+    
+    const order = workOrders.value.find(o => o.id === orderId)
+    if (order && order.status === 'delayed') {
+      order.status = 'pending'
+      order.delayReason = null
+      order.delayEndTime = null
+      
+      addNotification({
+        userId: order.studentId,
+        title: '工单恢复待派单',
+        content: `您的工单 ${orderId} 所需备件已到位，已恢复待派单状态`,
+        type: 'spareParts'
+      })
+      
+      return {
+        success: true,
+        message: '工单已恢复待派单状态，可以进行派单',
+        order
+      }
+    }
+    
+    return {
+      success: false,
+      message: '工单状态不正确，无法恢复',
+      order
+    }
   }
 
   function cancelOrder(orderId, studentId) {
@@ -832,6 +930,9 @@ export const useWorkOrderStore = defineStore('workOrder', () => {
     completeOrder,
     transferOrder,
     delayOrder,
+    checkOrderSparePartsStock,
+    assignWorkOrderWithStockCheck,
+    restoreDelayedOrder,
     cancelOrder,
     evaluateOrder,
     getOrderById,
