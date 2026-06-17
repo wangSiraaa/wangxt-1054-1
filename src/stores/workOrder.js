@@ -1,9 +1,11 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useSparePartsStore } from './spareParts'
+import { useEventOrderStore } from './eventOrder'
 
 export const useWorkOrderStore = defineStore('workOrder', () => {
   const sparePartsStore = useSparePartsStore()
+  const eventOrderStore = useEventOrderStore()
   const problemTypes = [
     { id: 1, name: '水电维修', isUrgent: false },
     { id: 2, name: '漏水', isUrgent: true },
